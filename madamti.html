@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Madam Ti' - Panel Penerawang</title>
+    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg-dark: #0f0518; --bg-panel: #1a0b2e; --primary: #9d00ff; --accent: #ff007f; --text-main: #e0e0e0; --text-dim: #a0a0a0; --bubble-in: #2d1b4e; --bubble-out: #ff007f; --glass: rgba(26, 11, 46, 0.85); --success: #00ff88; --danger: #ff4444; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; outline: none; }
+        html, body { height: 100dvh; overflow: hidden; font-family: 'Lato', sans-serif; background: radial-gradient(circle at center, #2e004f 0%, #000000 100%); color: var(--text-main); }
+        h1, h2, h3, .mystic-font { font-family: 'Cinzel', serif; }
+        
+        .app-container { display: flex; height: 100%; width: 100%; overflow: hidden; }
+        .sidebar { width: 320px; background: var(--bg-panel); border-right: 1px solid #4b0082; display: flex; flex-direction: column; z-index: 100; box-shadow: 5px 0 20px rgba(0,0,0,0.5); transition: transform 0.3s ease; }
+        .main-chat { flex: 1; display: flex; flex-direction: column; background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCI+PHBhdGggZD0iTTAgMGg2MHY2MEgweiIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik0zMCAzMG0tMiAwYTIgMiAwIDEgMCA0IDBhMiAyIDAgMSAwLTQgMCIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIvPjwvc3ZnPg=='); position: relative; width: 100%; min-height: 0; }
+        
+        .admin-header { background: linear-gradient(135deg, #4b0082, #000); color: #fff; padding: 15px; text-align: center; border-bottom: 2px solid var(--accent); flex-shrink: 0; }
+        .admin-title { font-size: 1.2em; margin: 0; text-shadow: 0 0 10px var(--primary); }
+        .admin-subtitle { font-size: 0.7em; opacity: 0.8; margin-top: 5px; letter-spacing: 1px; }
+        .admin-id-box { background: rgba(0,0,0,0.5); border: 1px solid var(--primary); padding: 10px; border-radius: 8px; margin: 10px 0; font-family: monospace; color: var(--accent); font-size: 1.5em; font-weight: bold; text-shadow: 0 0 10px var(--accent); letter-spacing: 5px; }
+        
+        .sidebar-tabs { display: flex; border-bottom: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
+        .tab-btn { flex: 1; padding: 12px; background: transparent; border: none; color: var(--text-dim); cursor: pointer; font-family: 'Cinzel', serif; font-weight: bold; transition: 0.3s; font-size: 0.9em; }
+        .tab-btn.active { color: var(--accent); border-bottom: 2px solid var(--accent); background: rgba(157, 0, 255, 0.1); }
+        .patient-list { flex: 1; overflow-y: auto; list-style: none; padding: 0; margin: 0; }
+        .patient-item { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; display: flex; align-items: center; gap: 10px; transition: 0.3s; }
+        .patient-item:hover { background: rgba(157, 0, 255, 0.1); }
+        .patient-item.active { background: linear-gradient(90deg, rgba(157, 0, 255, 0.2), transparent); border-left: 4px solid var(--accent); }
+        .patient-item.disconnected { opacity: 0.6; border-left: 4px solid #ffa500; }
+        .avatar { width: 40px; height: 40px; background: linear-gradient(45deg, #4b0082, #000); border: 1px solid var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: var(--accent); font-size: 1em; flex-shrink: 0; box-shadow: 0 0 10px rgba(157, 0, 255, 0.3); }
+        .patient-info { flex: 1; min-width: 0; }
+        .patient-name { font-weight: 600; color: #fff; margin-bottom: 3px; font-family: 'Cinzel', serif; font-size: 0.95em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .last-msg { font-size: 0.8em; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .badge { background: var(--accent); color: white; border-radius: 10px; padding: 2px 6px; font-size: 0.7em; font-weight: bold; box-shadow: 0 0 5px var(--accent); }
+        
+        .chat-header { background: var(--glass); backdrop-filter: blur(10px); padding: 12px; border-bottom: 1px solid rgba(157, 0, 255, 0.3); display: flex; justify-content: space-between; align-items: center; height: 60px; flex-shrink: 0; }
+        .chat-header-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+        .back-btn { font-size: 1.5em; background: none; border: none; cursor: pointer; color: var(--accent); padding: 5px; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; flex-shrink: 0; }
+        .chat-header-right { display: flex; gap: 8px; flex-shrink: 0; align-items: center; }
+        
+        .chat-window { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: transparent; min-height: 0; -webkit-overflow-scrolling: touch; }
+        
+        .message { max-width: 85%; padding: 10px 15px; border-radius: 15px; font-size: 0.9em; line-height: 1.4; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.3); animation: popIn 0.3s ease; word-wrap: break-word; flex-shrink: 0; }
+        @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .msg-in { background: var(--bubble-in); color: #fff; align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid rgba(157, 0, 255, 0.2); }
+        .msg-out { background: linear-gradient(135deg, var(--accent), #9d00ff); color: white; align-self: flex-end; border-bottom-right-radius: 2px; box-shadow: 0 0 15px rgba(255, 0, 127, 0.4); }
+        .msg-sys { background: rgba(0,0,0,0.6); color: var(--primary); align-self: center; font-size: 0.75em; padding: 6px 12px; border-radius: 20px; border: 1px solid var(--primary); text-transform: uppercase; letter-spacing: 1px; text-align: center; }
+        .msg-time { font-size: 0.6em; opacity: 0.6; margin-top: 4px; text-align: right; display: block; }
+        
+        .file-attachment { margin-top: 6px; background: rgba(0,0,0,0.3); border-radius: 10px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); max-width: 100%; }
+        .file-attachment img { max-width: 100%; max-height: 300px; width: auto; height: auto; display: block; cursor: pointer; filter: brightness(0.9); object-fit: contain; }
+        .file-info { padding: 6px; display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.5); }
+        .download-btn { color: var(--accent); text-decoration: none; font-size: 0.8em; font-weight: 600; }
+        
+        .input-area { background: var(--bg-panel); padding: 10px; display: flex; gap: 8px; align-items: center; border-top: 1px solid rgba(157, 0, 255, 0.3); flex-shrink: 0; width: 100%; padding-bottom: max(10px, env(safe-area-inset-bottom)); }
+        .input-area input[type="text"] { flex: 1; padding: 10px 15px; border: 1px solid #4b0082; border-radius: 20px; background: #0f0518; color: white; font-size: 14px; transition: 0.3s; min-width: 0; }
+        .input-area input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 10px rgba(255, 0, 127, 0.3); }
+        .icon-btn { width: 40px; height: 40px; min-width: 40px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.3em; transition: 0.2s; background: #2d1b4e; color: var(--text-main); box-shadow: 0 2px 5px rgba(0,0,0,0.3); flex-shrink: 0; }
+        .icon-btn:active { transform: scale(0.9); }
+        .btn-send { background: var(--accent); color: white; box-shadow: 0 0 15px rgba(255, 0, 127, 0.5); }
+        .btn-call { background: #2d1b4e; color: #00ff88; border: 1px solid #00ff88; }
+        .btn-end { background: #500000; color: #ff4444; border: 1px solid #ff4444; display: none; }
+        .btn-speaker { background: #1a4d2e; color: #4ade80; border: 1px solid #4ade80; display: none; }
+        .btn-quick { background: #4b0082; color: #ffd700; border: 1px solid #ffd700; font-size: 1em; }
+        .btn-finish { background: linear-gradient(135deg, #ff4444, #ff007f); color: white; border: none; font-size: 0.85em; padding: 10px 20px; border-radius: 20px; cursor: pointer; }
+        
+        .btn-sidebar { background: #500000; color: #ff4444; border: 1px solid #ff4444; font-size: 0.75em; padding: 8px 10px; margin: 5px; width: calc(100% - 10px); cursor: pointer; border-radius: 8px; }
+        .btn-sidebar.primary { background: linear-gradient(135deg, #9d00ff, #ff007f); color: white; border: none; }
+        
+        .empty-state { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--text-dim); background: radial-gradient(circle, #1a0b2e 0%, #000 100%); z-index: 50; padding: 20px; }
+        .crystal-ball { width: 80px; height: 80px; background: radial-gradient(circle at 30% 30%, rgba(157, 0, 255, 0.8), #000); border-radius: 50%; margin-bottom: 20px; box-shadow: 0 0 30px rgba(157, 0, 255, 0.5); animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        
+        .notification-popup { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; padding: 15px 20px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; gap: 10px; transition: transform 0.3s ease; max-width: 90%; width: 350px; }
+        .notification-popup.show { transform: translateX(-50%) translateY(0); }
+        
+        .quick-chat-overlay, .incoming-call-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 500; display: none; justify-content: center; align-items: center; padding: 20px; }
+        .quick-chat-overlay.show, .incoming-call-overlay.show { display: flex; }
+        .quick-chat-modal, .incoming-call-modal { background: var(--bg-panel); border: 1px solid var(--primary); border-radius: 15px; padding: 20px; width: 90%; max-width: 500px; max-height: 85vh; overflow-y: auto; box-shadow: 0 0 30px rgba(157, 0, 255, 0.5); display: flex; flex-direction: column; }
+        .incoming-call-modal { max-width: 320px; text-align: center; animation: callPulse 2s ease-in-out infinite; border: 2px solid var(--accent); }
+        @keyframes callPulse { 0%, 100% { box-shadow: 0 0 40px rgba(255, 0, 127, 0.5); } 50% { box-shadow: 0 0 60px rgba(255, 0, 127, 0.8); } }
+        
+        .quick-chat-list { flex: 1; overflow-y: auto; margin-bottom: 15px; }
+        .quick-chat-item { background: rgba(0,0,0,0.3); border: 1px solid rgba(157, 0, 255, 0.3); border-radius: 10px; padding: 15px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .quick-chat-text { width: 100%; min-height: 80px; padding: 12px; border: 1px solid #4b0082; border-radius: 8px; background: #0f0518; color: white; font-size: 16px; resize: vertical; outline: none; box-sizing: border-box; }
+        .qc-btn { padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.9em; font-weight: 600; transition: 0.2s; }
+        .qc-send { background: var(--accent); color: white; }
+        .qc-save { background: #1a4d2e; color: #4ade80; }
+        .qc-delete { background: #500000; color: #ff4444; }
+        .qc-add { width: 100%; padding: 12px; background: linear-gradient(135deg, #9d00ff, #ff007f); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; margin-bottom: 10px; }
+        .qc-close { width: 100%; padding: 12px; background: #2d1b4e; color: var(--text-main); border: 1px solid var(--primary); border-radius: 10px; cursor: pointer; }
+        
+        .incoming-call-actions { display: flex; gap: 20px; justify-content: center; margin-top: 20px; }
+        .call-action-btn { width: 75px; height: 75px; border-radius: 50%; border: none; cursor: pointer; font-size: 2em; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; }
+        .btn-answer { background: #1a4d2e; color: #00ff88; border: 2px solid #00ff88; }
+        .btn-reject { background: #500000; color: #ff4444; border: 2px solid #ff4444; }
+        .call-action-label { font-size: 0.85em; color: #fff; margin-top: 10px; font-weight: 600; }
+        .call-action-wrapper { display: flex; flex-direction: column; align-items: center; }
+
+        @media (max-width: 768px) {
+            .app-container { flex-direction: column; }
+            .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 100%; max-width: 100%; z-index: 200; }
+            .sidebar.hidden { transform: translateX(-100%); }
+            .main-chat { width: 100%; height: 100%; }
+            .back-btn { display: flex !important; }
+            .btn-finish { width: 100%; margin: 10px 0 0 0; }
+            .chat-header { height: 55px; padding: 10px; }
+            .message { max-width: 90%; font-size: 0.85em; }
+        }
+        @media (min-width: 769px) { .back-btn { display: none !important; } }
+        #file-input, .hidden { display: none !important; }
+        audio { display: none; }
+    </style>
+</head>
+<body>
+
+<audio id="ringtone" src="https://assets.mixkit.co/sfx/preview/mixkit-alarm-tone-996.mp3" loop></audio>
+<audio id="keep-alive-audio" loop preload="auto">
+    <source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=" type="audio/wav">
+</audio>
+
+<div id="notification" class="notification-popup">
+    <div class="notification-icon">🔔</div>
+    <div class="notification-content">
+        <div class="notification-title" id="notif-title">Pesan Baru</div>
+        <div class="notification-message" id="notif-message">...</div>
+    </div>
+</div>
+
+<div class="incoming-call-overlay" id="incoming-call-overlay">
+    <div class="incoming-call-modal">
+        <h3>📞 PANGGILAN MASUK</h3>
+        <p id="incoming-caller-name">Anak Madam sedang menelepon...</p>
+        <div class="incoming-call-actions">
+            <div class="call-action-wrapper">
+                <button class="call-action-btn btn-reject" onclick="rejectIncomingCall()">📴</button>
+                <div class="call-action-label">Tolak</div>
+            </div>
+            <div class="call-action-wrapper">
+                <button class="call-action-btn btn-answer" onclick="answerIncomingCall()">📞</button>
+                <div class="call-action-label">Jawab</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="quick-chat-overlay" id="quick-chat-overlay">
+    <div class="quick-chat-modal">
+        <h3>⚡ Chat Cepat</h3>
+        <div id="quick-chat-list" class="quick-chat-list"></div>
+        <button class="qc-add" onclick="addQuickChatTemplate()">+ Tambah Template Baru</button>
+        <button class="qc-close" onclick="closeQuickChat()">Tutup</button>
+    </div>
+</div>
+
+<div class="app-container">
+    <div class="sidebar" id="sidebar">
+        <div class="admin-header">
+            <h1 class="admin-title mystic-font">Madam Ti'</h1>
+            <div class="admin-subtitle">ID Spiritual Anda</div>
+            <div class="admin-id-box" id="my-id">----</div>
+            <button onclick="copyId()" style="background: rgba(255,255,255,0.1); border: 1px solid var(--primary); color: var(--accent); padding: 5px 15px; border-radius: 15px; font-size: 0.75em; cursor: pointer; font-family: 'Lato';"> Salin ID</button>
+            <div id="connection-status" style="font-size: 0.7em; color: #00ff88; margin-top: 5px;">● Tersambung</div>
+        </div>
+        <div class="sidebar-tabs">
+            <button class="tab-btn active" onclick="switchTab('active')">🟢 Aktif</button>
+            <button class="tab-btn" onclick="switchTab('history')">📜 Riwayat Chat</button>
+        </div>
+        <ul id="patient-list" class="patient-list"></ul>
+        <ul id="history-list" class="patient-list hidden"></ul>
+        <div style="padding: 10px;">
+            <button class="btn-sidebar primary" onclick="generateNewId()">🔄 Buat ID Baru</button>
+            <button class="btn-sidebar" onclick="clearHistory()">🗑️ Hapus Semua Riwayat</button>
+            <button class="btn-sidebar" onclick="exitApp()" style="margin-top: 10px;">🚪 Keluar Aplikasi</button>
+        </div>
+    </div>
+
+    <div class="main-chat">
+        <div id="empty-state" class="empty-state">
+            <div class="crystal-ball"></div>
+            <h3 class="mystic-font" style="color: var(--primary); text-shadow: 0 0 10px var(--primary); font-size: 1.2em;">Menunggu Energi Masuk...</h3>
+            <p style="font-size: 0.85em; opacity: 0.7; margin-top: 10px; text-align: center;">Pilih Anak Madam dari daftar untuk mulai menerawang</p>
+        </div>
+        <div id="chat-interface" class="hidden" style="display: flex; flex-direction: column; height: 100%;">
+            <div class="chat-header">
+                <div class="chat-header-left">
+                    <button class="back-btn" onclick="backToSidebar()">⬅</button>
+                    <div class="patient-header-info">
+                        <div id="current-patient-name" class="mystic-font">Anak Madam</div>
+                        <div id="current-session-info" style="font-size: 0.7em; color: var(--accent); text-shadow: 0 0 5px var(--accent);">● Tersambung</div>
+                    </div>
+                </div>
+                <div class="chat-header-right">
+                    <button id="btn-speaker" class="icon-btn btn-speaker" onclick="toggleSpeaker()" title="Pengeras Suara">🔊</button>
+                    <button id="btn-call" class="icon-btn btn-call" onclick="startCall()" title="Telepon">📞</button>
+                    <button id="btn-end" class="icon-btn btn-end" onclick="endCall()" title="Tutup">📴</button>
+                    <button class="btn-finish" onclick="finishSession()">✓ Selesai</button>
+                </div>
+            </div>
+            <div id="chat-window" class="chat-window"></div>
+            <div class="input-area">
+                <label for="file-input" class="icon-btn" title="Kirim File">📎</label>
+                <input type="file" id="file-input" accept="image/*,.pdf,.doc,.docx,.txt" onchange="handleFileSelect(event)">
+                <button class="icon-btn btn-quick" onclick="openQuickChat()" title="Chat Cepat">⚡</button>
+                <input type="text" id="msg-input" placeholder="Ketik pesan..." onkeypress="handleEnter(event)">
+                <button class="icon-btn btn-send" onclick="sendMessage()" title="Kirim">▶</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<audio id="remote-audio" autoplay playsinline></audio>
+
+<script>
+    // --- KONFIGURASI & VARIABEL GLOBAL ---
+    let peer = null, connections = {}, activePeerId = null, activePeerName = null, currentCall = null, pendingCall = null;
+    let localStream = null, unreadCounts = {}, isSpeakerOn = false, currentTab = 'active';
+    let activeSessions = {}; 
+    let patientNames = {}, ringtonePlaying = false, incomingCallTimeout = null, isRemoteEndingCall = false;
+    let pendingFileMeta = null;
+    const MAX_FILE_SIZE = 3 * 1024 * 1024; // REQUEST 1: 3MB
+    const STORAGE_KEY = 'madamTi_id';
+    const DB_NAME = 'MadamTiDB';
+    const DB_VERSION = 1;
+    const DEFAULT_QUICK_CHAT = ["Silakan fokus dan tenangkan pikiran Anda. Saya akan mulai menerawang.", "Mohon tunggu sebentar, saya sedang melihat energi Anda...", "Apakah ada hal spesifik yang ingin Anda tanyakan hari ini?"];
+    let db = null;
+
+    // --- INDEXEDDB HELPER ---
+    function initDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            request.onupgradeneeded = (event) => {
+                const database = event.target.result;
+                if (!database.objectStoreNames.contains('chats')) {
+                    database.createObjectStore('chats', { keyPath: 'id' });
+                }
+            };
+            request.onsuccess = (event) => {
+                db = event.target.result;
+                resolve(db);
+            };
+            request.onerror = (event) => reject('DB Error');
+        });
+    }
+
+    function saveChatToDB(madamId, patientName, messageObj) {
+        if (!db) return;
+        const historyKey = `${madamId}_${patientName}`;
+        const transaction = db.transaction(['chats'], 'readwrite');
+        const store = transaction.objectStore('chats');
+        const getReq = store.get(historyKey);
+        
+        getReq.onsuccess = () => {
+            let data = getReq.result || { id: historyKey, madamId, patientName, messages: [], lastUpdate: new Date().toISOString() };
+            data.messages.push(messageObj);
+            data.lastUpdate = new Date().toISOString();
+            if (data.messages.length > 100) data.messages.shift(); 
+            store.put(data);
+            if (currentTab === 'history') renderHistoryList();
+        };
+    }
+
+    function getHistoryFromDB() {
+        return new Promise((resolve) => {
+            if (!db) { resolve([]); return; }
+            const transaction = db.transaction(['chats'], 'readonly');
+            const store = transaction.objectStore('chats');
+            const request = store.getAll();
+            request.onsuccess = () => resolve(request.result || []);
+        });
+    }
+
+    function clearHistoryDB() {
+        if (!db) return;
+        const transaction = db.transaction(['chats'], 'readwrite');
+        const store = transaction.objectStore('chats');
+        store.clear();
+    }
+
+    // --- INISIALISASI ---
+    if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+    
+    function getStoredId() { return localStorage.getItem(STORAGE_KEY); }
+    function storeId(id) { localStorage.setItem(STORAGE_KEY, id); }
+    function generateId() { return String(Math.floor(10000 + Math.random() * 90000)); } 
+
+    function generateNewId() {
+        if(confirm('⚠️ Buat ID Baru?\n\nID lama tidak akan bisa digunakan lagi.\nRiwayat chat akan tetap tersimpan berdasarkan ID lama.\n\nLanjutkan?')) {
+            Object.values(connections).forEach(conn => { conn.send({ type: 'exit', reason: 'madam_changed_id' }); conn.close(); });
+            connections = {}; activeSessions = {}; 
+            const newId = generateId(); 
+            storeId(newId);
+            document.getElementById('my-id').innerText = '...'; 
+            document.getElementById('connection-status').innerText = '● Membuat ID baru...';
+            setTimeout(() => { window.location.reload(); }, 1000);
+        }
+    }
+
+    function exitApp() {
+        if(confirm('Yakin ingin keluar dari aplikasi?')) {
+            Object.values(connections).forEach(conn => {
+                try { if(conn.open) conn.send({ type: 'exit', reason: 'madam_exited' }); } catch(e) {}
+                conn.close();
+            });
+            if(peer) peer.destroy();
+            document.body.innerHTML = `<div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; background:#000; color:white;"><h1>Sesi Berakhir</h1><button onclick="location.reload()" style="padding:10px; margin-top:20px;">Masuk Kembali</button></div>`;
+        }
+    }
+
+    let adminId = getStoredId();
+    if (!adminId) { adminId = generateId(); storeId(adminId); }
+    
+    initDB();
+
+    function startKeepAlive() { const audio = document.getElementById('keep-alive-audio'); if (audio) { audio.volume = 0.01; audio.play().catch(e => {}); } }
+    document.body.addEventListener('click', startKeepAlive, { once: true });
+    document.body.addEventListener('touchstart', startKeepAlive, { once: true });
+
+    const iceServers = [
+        { urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }, { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:stun3.l.google.com:19302' }, { urls: 'stun:stun4.l.google.com:19302' }, { urls: 'stun:stun.cloudflare.com:3478' },
+        { urls: 'turn:freeturn.net:3478', username: 'free', credential: 'free' }, { urls: 'turn:freeturn.net:3478?transport=tcp', username: 'free', credential: 'free' },
+        { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' }, { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+        { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
+    ];
+
+    peer = new Peer(adminId, { debug: 2, config: { iceServers: iceServers }, pingInterval: 5000 });
+
+    peer.on('open', (id) => { 
+        document.getElementById('my-id').innerText = id; 
+        document.getElementById('connection-status').innerText = '● Tersambung'; 
+        document.getElementById('connection-status').style.color = '#00ff88'; 
+        storeId(id); 
+    });
+    peer.on('error', (err) => { 
+        document.getElementById('connection-status').innerText = '● Tidak Terhubung'; 
+        document.getElementById('connection-status').style.color = '#ff4444'; 
+        if (err.type === 'unavailable-id') { 
+            const newId = generateId(); storeId(newId); 
+            setTimeout(() => { window.location.reload(); }, 2000); 
+        } else if (err.type === 'peer-disconnected' || err.type === 'network') { 
+            setTimeout(() => { if (peer.disconnected) peer.reconnect(); }, 3000); 
+        } 
+    });
+    peer.on('disconnected', () => { 
+        document.getElementById('connection-status').innerText = '● Menghubungkan ulang...'; 
+        document.getElementById('connection-status').style.color = '#ffa500'; 
+        setTimeout(() => { if (peer.disconnected) peer.reconnect(); }, 3000); 
+    });
+    peer.on('reconnected', () => { 
+        document.getElementById('connection-status').innerText = '● Tersambung'; 
+        document.getElementById('connection-status').style.color = '#00ff88'; 
+        addSystemMessage('🔗 Koneksi dipulihkan'); 
+    });
+
+    peer.on('call', (incomingCall) => {
+        if (!connections[incomingCall.peer] && !Object.values(activeSessions).some(s => s.peerId === incomingCall.peer)) { incomingCall.close(); return; }
+        if (currentCall) { incomingCall.close(); return; }
+        pendingCall = incomingCall;
+        pendingCall.on('close', () => {
+            if (pendingCall === incomingCall) {
+                document.getElementById('incoming-call-overlay').classList.remove('show'); stopRingtone(); clearTimeout(incomingCallTimeout); pendingCall = null;
+                addSystemMessage('📴 Panggilan dibatalkan oleh penelepon');
+            }
+        });
+        const callerName = (connections[incomingCall.peer]?.patientData?.name) || 'Anak Madam';
+        document.getElementById('incoming-caller-name').innerText = callerName + ' sedang menelepon...';
+        document.getElementById('incoming-call-overlay').classList.add('show');
+        const ringtone = document.getElementById('ringtone'); ringtone.currentTime = 0; ringtone.play().catch(e => console.log('Ringtone error:', e)); ringtonePlaying = true;
+        if(navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
+        showNotification('📞 Panggilan Masuk', callerName + ' sedang menelepon...');
+        incomingCallTimeout = setTimeout(() => { rejectIncomingCall(); addSystemMessage('📴 Panggilan tidak dijawab, diakhiri otomatis'); }, 60000);
+    });
+
+    function answerIncomingCall() {
+        if (!pendingCall) return; clearTimeout(incomingCallTimeout); stopRingtone(); document.getElementById('incoming-call-overlay').classList.remove('show');
+        const pId = pendingCall.peer;
+        selectPatient(pId);
+        navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } })
+        .then((stream) => { localStream = stream; pendingCall.answer(stream); currentCall = pendingCall; pendingCall = null; handleCall(currentCall); enableLoudspeaker(); })
+        .catch(err => { alert('❌ Gagal mengakses mikrofon: ' + err.message); rejectIncomingCall(); });
+    }
+
+    function rejectIncomingCall() {
+        clearTimeout(incomingCallTimeout); stopRingtone(); document.getElementById('incoming-call-overlay').classList.remove('show');
+        if (pendingCall && connections[pendingCall.peer] && connections[pendingCall.peer].open) { connections[pendingCall.peer].send({ type: 'call_rejected' }); }
+        if (pendingCall) { pendingCall.close(); pendingCall = null; }
+        addSystemMessage('📴 Panggilan ditolak');
+    }
+
+    function stopRingtone() { const ringtone = document.getElementById('ringtone'); if (ringtonePlaying) { ringtone.pause(); ringtone.currentTime = 0; ringtonePlaying = false; } }
+    function getMessageText(data) { if (typeof data === 'string') return data; if (data && typeof data === 'object') { if (data.text) return data.text; if (data.message) return data.message; if (data.content) return data.content; } return ''; }
+
+    peer.on('connection', (conn) => {
+        connections[conn.peer] = conn; unreadCounts[conn.peer] = 0; 
+        conn.patientData = { name: 'Menunggu nama...', id: conn.peer };
+        
+        conn.on('open', () => { console.log('Koneksi terbuka:', conn.peer); });
+        
+        conn.on('data', (data) => {
+            if (data instanceof ArrayBuffer || data instanceof Blob) {
+                if (pendingFileMeta && conn.patientData.name !== 'Menunggu nama...') {
+                    const blob = new Blob([data], { type: pendingFileMeta.fileType });
+                    const url = URL.createObjectURL(blob);
+                    
+                    const reader = new FileReader();
+                    reader.onloadend = function() {
+                        const base64data = reader.result;
+                        addFileToWindow({ name: pendingFileMeta.name, fileType: pendingFileMeta.fileType, data: url, size: pendingFileMeta.size }, 'in');
+                        saveChatToDB(adminId, conn.patientData.name, { 
+                            type: 'file', name: pendingFileMeta.name, fileType: pendingFileMeta.fileType, data: base64data, size: pendingFileMeta.size, direction: 'in', timestamp: new Date().toISOString() 
+                        });
+                        conn.lastMessage = '📎 ' + pendingFileMeta.name;
+                        pendingFileMeta = null;
+                        updatePatientList();
+                    }
+                    reader.readAsDataURL(blob);
+                }
+                return;
+            }
+
+            if (data && data.type === 'file-meta') { pendingFileMeta = data; return; }
+            
+            if (data && data.type === 'patientInfo' && data.name) {
+                conn.patientData.name = data.name; patientNames[conn.peer] = data.name;
+                if (!activeSessions[conn.peer]) {
+                    activeSessions[conn.peer] = { conn: conn, peerId: conn.peer, name: data.name };
+                } else {
+                    activeSessions[conn.peer].conn = conn;
+                }
+                
+                if (activePeerName === data.name) {
+                    document.getElementById('current-session-info').innerText = '● Tersambung (Sesi Dilanjutkan)';
+                    setTimeout(() => { document.getElementById('current-session-info').innerText = '● Tersambung'; }, 3000);
+                }
+                updatePatientList(); return;
+            }
+            if (data && data.type === 'heartbeat') return;
+            
+            if (data && data.type === 'end_call') { 
+                isRemoteEndingCall = true; 
+                if (currentCall) { currentCall.close(); currentCall = null; } 
+                if (pendingCall) { pendingCall.close(); pendingCall = null; }
+                document.getElementById('incoming-call-overlay').classList.remove('show');
+                document.getElementById('btn-call').style.display = 'flex';
+                document.getElementById('btn-end').style.display = 'none';
+                document.getElementById('btn-speaker').style.display = 'none';
+                stopRingtone(); clearTimeout(incomingCallTimeout);
+                addSystemMessage('📴 Panggilan dibatalkan/diakhiri oleh pasien'); 
+                isRemoteEndingCall = false; 
+                return; 
+            }
+            
+            if (data && data.type === 'exit') { 
+                const pName = conn.patientData.name || 'Anak Madam'; 
+                addSystemMessage('❌ ' + pName + ' mengakhiri konsultasi'); 
+                if (activePeerId === conn.peer && currentCall) { currentCall.close(); if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; } } 
+                delete activeSessions[conn.peer]; 
+                conn.close(); 
+                if (activePeerName === pName) setTimeout(() => { backToSidebar(); }, 1000);
+                return; 
+            }
+            
+            const messageText = getMessageText(data); const messageType = data && data.type ? data.type : 'text';
+            saveChatToDB(adminId, conn.patientData.name, { type: messageType, text: messageText, data: data.data, fileType: data.fileType, name: data.name, direction: 'in', timestamp: new Date().toISOString() });
+            
+            const senderName = conn.patientData.name || 'Anak Madam'; const preview = messageType === 'file' ? '📎 Mengirim file' : messageText; 
+            showNotification(senderName, preview);
+            conn.lastMessage = messageType === 'file' ? '📎 File' : (messageText || 'Pesan');
+            if (activePeerId === conn.peer) { if (messageType === 'file') addFileToWindow(data, 'in'); else if (messageText) addMessageToWindow(messageText, 'in'); } else { unreadCounts[conn.peer] = (unreadCounts[conn.peer] || 0) + 1; updatePatientList(); if(navigator.vibrate) navigator.vibrate(200); }
+        });
+
+        conn.on('close', () => { 
+            const pName = conn.patientData ? conn.patientData.name : 'Anak Madam'; 
+            if (activeSessions[conn.peer]) activeSessions[conn.peer].conn = null;
+            if (activePeerName === pName) { document.getElementById('current-session-info').innerText = '⚠️ Terputus, menunggu...'; }
+            updatePatientList(); 
+        });
+        conn.on('error', (err) => { console.error('Connection error:', err); });
+    });
+
+    let wakeLock = null; async function requestWakeLock() { if ('wakeLock' in navigator) { try { wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {} } } requestWakeLock();
+    document.addEventListener('visibilitychange', async () => { if (document.visibilityState === 'visible') { requestWakeLock(); startKeepAlive(); if (peer && peer.disconnected) peer.reconnect(); } });
+
+    function showNotification(title, message) { if ('Notification' in window && Notification.permission === 'granted') { new Notification(title, { body: message || 'Pesan baru', vibrate: [200, 100, 200] }); } const popup = document.getElementById('notification'); document.getElementById('notif-title').innerText = title; document.getElementById('notif-message').innerText = message || 'Pesan baru'; popup.classList.add('show'); setTimeout(() => { popup.classList.remove('show'); }, 3000); popup.onclick = () => { popup.classList.remove('show'); }; }
+    
+    async function renderHistoryList() { 
+        const listEl = document.getElementById('history-list'); listEl.innerHTML = ''; 
+        const sessions = await getHistoryFromDB();
+        sessions.sort((a, b) => new Date(b.lastUpdate) - new Date(a.lastUpdate));
+        
+        if (sessions.length === 0) { listEl.innerHTML = '<li style="padding:20px; text-align:center; color:#666;">Belum ada riwayat chat</li>'; return; } 
+        sessions.forEach(session => { 
+            const li = document.createElement('li'); li.className = 'patient-item'; 
+            li.onclick = () => loadHistoryChat(session); 
+            const lastMsg = session.messages.length > 0 ? (session.messages[session.messages.length - 1].type === 'file' ? '📎 ' + session.messages[session.messages.length - 1].name : session.messages[session.messages.length - 1].text) : 'Tidak ada pesan'; 
+            const date = new Date(session.lastUpdate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit' }); 
+            li.innerHTML = `<div class="avatar">🔮</div><div class="patient-info"><div class="patient-name">${session.patientName}</div><div class="last-msg">${lastMsg}</div><div class="history-date" style="color:var(--primary)">🆔 Madam ID: ${session.madamId}</div><div class="history-date">📅 ${date}</div></div>`; 
+            listEl.appendChild(li); 
+        }); 
+    } 
+    
+    async function loadHistoryChat(session) { 
+        activePeerId = 'history_' + session.id; 
+        document.getElementById('empty-state').classList.add('hidden'); 
+        document.getElementById('chat-interface').classList.remove('hidden'); 
+        document.getElementById('chat-interface').style.display = 'flex'; 
+        document.getElementById('current-patient-name').innerText = session.patientName; 
+        document.getElementById('current-session-info').innerText = '📜 Riwayat (ID: ' + session.madamId + ')'; 
+        document.getElementById('chat-window').innerHTML = ''; 
+        if(window.innerWidth <= 768) document.getElementById('sidebar').classList.add('hidden'); 
+        
+        session.messages.forEach(msg => { 
+            if (msg.type === 'file') {
+                addFileToWindow({ type: 'file', data: msg.data, fileType: msg.fileType, name: msg.name, size: msg.size }, msg.direction); 
+            } else {
+                addMessageToWindow(msg.text, msg.direction); 
+            }
+        }); 
+        addSystemMessage('--- Riwayat Chat dengan ' + session.patientName + ' ---'); 
+    } 
+    
+    function clearHistory() { if(confirm('Yakin ingin menghapus semua riwayat chat?')) { clearHistoryDB(); renderHistoryList(); alert('Riwayat dihapus.'); } }
+    
+    function switchTab(tab) { currentTab = tab; document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active')); event.target.classList.add('active'); if (tab === 'active') { document.getElementById('patient-list').classList.remove('hidden'); document.getElementById('history-list').classList.add('hidden'); updatePatientList(); } else { document.getElementById('patient-list').classList.add('hidden'); document.getElementById('history-list').classList.remove('hidden'); renderHistoryList(); } }
+    
+    function enableLoudspeaker() { document.getElementById('remote-audio').volume = 1.0; isSpeakerOn = true; updateSpeakerButton(); }
+    function toggleSpeaker() { isSpeakerOn = !isSpeakerOn; document.getElementById('remote-audio').volume = isSpeakerOn ? 1.0 : 0.5; updateSpeakerButton(); }
+    function updateSpeakerButton() { const btn = document.getElementById('btn-speaker'); btn.style.display = isSpeakerOn ? 'flex' : 'none'; btn.innerHTML = isSpeakerOn ? '🔊' : '🔇'; btn.style.background = isSpeakerOn ? '#1a4d2e' : '#2d1b4e'; }
+    
+    function finishSession() { 
+        if(!activePeerName || !activeSessions[activePeerId]) { alert('Tidak ada pasien yang terhubung'); return; } 
+        if(confirm('✓ Akhiri Sesi Konsultasi?\n\nPasien akan diberitahu bahwa Anda telah keluar.\n\nLanjutkan?')) { 
+            const session = activeSessions[activePeerId];
+            if (session.conn && session.conn.open) { session.conn.send({ type: 'exit', reason: 'madam_finished', message: 'Madam Ti\' telah mengakhiri sesi konsultasi' }); session.conn.close(); }
+            delete activeSessions[activePeerId];
+            if (currentCall) { currentCall.close(); currentCall = null; } 
+            if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; } 
+            addSystemMessage('✓ Sesi dengan ' + activePeerName + ' diakhiri'); 
+            setTimeout(() => { backToSidebar(); }, 1000); 
+        } 
+    }
+
+    function handleFileSelect(event) { 
+        const file = event.target.files[0]; 
+        if (!file || !activePeerName || !activeSessions[activePeerId]?.conn) { alert('Pilih pasien terlebih dahulu'); return; } 
+        if (file.size > MAX_FILE_SIZE) { alert('File terlalu besar! Maksimal 3MB.'); event.target.value = ''; return; } 
+        const statusDiv = document.createElement('div'); statusDiv.className = 'msg-sys'; statusDiv.innerText = '⏳ Mengirim...'; document.getElementById('chat-window').appendChild(statusDiv); 
+        const reader = new FileReader(); 
+        reader.onload = function(e) { 
+            const arrayBuffer = e.target.result; 
+            const conn = activeSessions[activePeerId].conn;
+            if (conn && conn.open) { 
+                conn.send({ type: 'file-meta', name: file.name, fileType: file.type, size: file.size }); 
+                conn.send(arrayBuffer); 
+                const blob = new Blob([arrayBuffer], { type: file.type }); const url = URL.createObjectURL(blob);
+                addFileToWindow({ name: file.name, fileType: file.type, data: url, size: file.size }, 'out'); 
+                saveChatToDB(adminId, conn.patientData.name, { type: 'file', name: file.name, fileType: file.type, data: e.target.result, size: file.size, direction: 'out', timestamp: new Date().toISOString() });
+                conn.lastMessage = '📎 ' + file.name; updatePatientList(); 
+            } 
+            statusDiv.remove(); event.target.value = ''; 
+        }; 
+        reader.readAsArrayBuffer(file);
+    }
+
+    function sendMessage() { if(!activePeerName || !activeSessions[activePeerId]?.conn) return; const input = document.getElementById('msg-input'); const msg = input.value.trim(); if(msg) { const conn = activeSessions[activePeerId].conn; conn.send({ type: 'text', text: msg }); saveChatToDB(adminId, conn.patientData.name, { type: 'text', text: msg, direction: 'out', timestamp: new Date().toISOString() }); addMessageToWindow(msg, 'out'); conn.lastMessage = msg; input.value = ''; updatePatientList(); } }
+    function handleEnter(e) { if(e.key === 'Enter') sendMessage(); }
+    
+    function addMessageToWindow(text, type) { 
+        const div = document.createElement('div'); div.className = 'message msg-' + type; 
+        const textSpan = document.createElement('span'); textSpan.textContent = text;
+        const timeSpan = document.createElement('span'); timeSpan.className = 'msg-time'; timeSpan.innerText = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        div.appendChild(textSpan); div.appendChild(timeSpan);
+        const win = document.getElementById('chat-window'); win.appendChild(div); win.scrollTop = win.scrollHeight; 
+    }
+    
+    function addFileToWindow(fileData, type) { 
+        const div = document.createElement('div'); div.className = 'message msg-' + type; 
+        const isImage = fileData.fileType && fileData.fileType.startsWith('image/'); 
+        const fileSizeKB = fileData.size ? (fileData.size / 1024).toFixed(1) : '0'; 
+        let content = ''; 
+        if (isImage) { content = '<div class="file-attachment"><img src="' + fileData.data + '" onclick="viewImage(this.src)"></div>'; } 
+        else { content = `<div class="file-attachment"><div class="file-info"><span style="font-size:1.3em">📄</span><div style="flex:1"><div style="font-weight:600; font-size:0.8em">${fileData.name || 'File'}</div><div style="font-size:0.7em; color:#aaa">${fileSizeKB} KB</div></div>${fileData.data ? '<a href="' + fileData.data + '" download="' + fileData.name + '" class="download-btn">⬇ Unduh</a>' : ''}</div></div>`; } 
+        div.innerHTML = content + '<span class="msg-time">' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) + '</span>'; 
+        const win = document.getElementById('chat-window'); win.appendChild(div); win.scrollTop = win.scrollHeight; 
+    }
+    
+    function viewImage(src) { const win = window.open(); win.document.write('<body style="background:#000; margin:0; display:flex; justify-content:center; align-items:center; height:100vh;"><img src="' + src + '" style="max-width:100%; max-height:100%;"></body>'); }
+    
+    function updatePatientList() { 
+        if (currentTab !== 'active') return; 
+        const listEl = document.getElementById('patient-list'); listEl.innerHTML = ''; 
+        const sessions = Object.values(activeSessions);
+        if (sessions.length === 0) { listEl.innerHTML = '<li style="padding:20px; text-align:center; color:#666;">Belum ada Anak Madam</li>'; return; } 
+        sessions.forEach(session => { 
+            const isConnected = session.conn !== null;
+            const li = document.createElement('li'); 
+            li.className = 'patient-item ' + (activePeerId === session.peerId ? 'active' : '') + (!isConnected ? ' disconnected' : ''); 
+            li.onclick = () => selectPatient(session.peerId); 
+            const badgeCount = unreadCounts[session.peerId] || 0; 
+            li.innerHTML = `<div class="avatar">🔮</div><div class="patient-info"><div class="patient-name">${session.name} ${!isConnected ? '⚠️' : ''}</div><div class="last-msg">${session.conn?.lastMessage || 'Menunggu...'}</div></div>${badgeCount > 0 ? '<span class="badge">' + badgeCount + '</span>' : ''}`; 
+            listEl.appendChild(li); 
+        }); 
+    }
+
+    function selectPatient(pid) { 
+        const session = activeSessions[pid]; if (!session) return;
+        activePeerId = pid; activePeerName = session.name; unreadCounts[pid] = 0; 
+        document.getElementById('empty-state').classList.add('hidden'); document.getElementById('chat-interface').classList.remove('hidden'); document.getElementById('chat-interface').style.display = 'flex'; 
+        document.getElementById('current-patient-name').innerText = session.name; 
+        document.getElementById('current-session-info').innerText = session.conn ? '● Tersambung' : '⚠️ Terputus, menunggu...'; 
+        document.getElementById('chat-window').innerHTML = ''; 
+        if(window.innerWidth <= 768) document.getElementById('sidebar').classList.add('hidden'); 
+        
+        getHistoryFromDB().then(sessions => {
+            const histSession = sessions.find(s => s.madamId === adminId && s.patientName === session.name);
+            if (histSession) { 
+                addSystemMessage('📜 Memuat riwayat chat...'); 
+                histSession.messages.forEach(msg => { if (msg.type === 'file') addFileToWindow({ type: 'file', data: msg.data, fileType: msg.fileType, name: msg.name, size: msg.size }, msg.direction); else addMessageToWindow(msg.text, msg.direction); }); 
+            } 
+            addSystemMessage('Sesi dengan ' + session.name + (session.conn ? ' Dimulai/Dilanjutkan' : ' (Menunggu koneksi...)')); 
+        });
+        updatePatientList(); 
+    }
+
+    function backToSidebar() { activePeerId = null; activePeerName = null; document.getElementById('chat-interface').classList.add('hidden'); document.getElementById('empty-state').classList.remove('hidden'); document.getElementById('sidebar').classList.remove('hidden'); updatePatientList(); }
+    function addSystemMessage(text) { const div = document.createElement('div'); div.className = 'message msg-sys'; div.innerText = text; document.getElementById('chat-window').appendChild(div); }
+    
+    function startCall() { if(!activePeerName || !activeSessions[activePeerId]?.conn) { alert('Tidak ada pasien yang terhubung'); return; } const session = activeSessions[activePeerId]; navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }).then((stream) => { localStream = stream; const call = peer.call(session.peerId, stream); handleCall(call); enableLoudspeaker(); incomingCallTimeout = setTimeout(() => { if (currentCall) { addSystemMessage('⏰ Panggilan tidak dijawab, diakhiri otomatis'); endCall(); } }, 60000); }).catch(err => { alert('❌ Gagal mengakses mikrofon: ' + err.message); }); }
+    function handleCall(call) { currentCall = call; document.getElementById('btn-call').style.display = 'none'; document.getElementById('btn-end').style.display = 'flex'; document.getElementById('btn-speaker').style.display = 'flex'; call.on('stream', (remoteStream) => { document.getElementById('remote-audio').srcObject = remoteStream; document.getElementById('remote-audio').volume = 1.0; document.getElementById('remote-audio').play(); addSystemMessage('🎙️ Suara Terbuka'); }); call.on('close', () => { if (!isRemoteEndingCall) endCallUI(); }); }
+    function endCall() { if (incomingCallTimeout) { clearTimeout(incomingCallTimeout); incomingCallTimeout = null; } const session = activeSessions[activePeerId]; if (!isRemoteEndingCall && session?.conn?.open) { session.conn.send({ type: 'end_call' }); } if(currentCall) { currentCall.close(); currentCall = null; } if(localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; } endCallUI(); }
+    function endCallUI() { document.getElementById('btn-call').style.display = 'flex'; document.getElementById('btn-end').style.display = 'none'; document.getElementById('btn-speaker').style.display = 'none'; isSpeakerOn = false; currentCall = null; stopRingtone(); addSystemMessage('📴 Panggilan Diakhiri'); }
+    function copyId() { const idText = document.getElementById('my-id').innerText; navigator.clipboard.writeText(idText).then(() => { alert('ID Disalin: ' + idText); }).catch(() => { const textArea = document.createElement('textarea'); textArea.value = idText; document.body.appendChild(textArea); textArea.select(); document.execCommand('copy'); document.body.removeChild(textArea); alert('ID Disalin: ' + idText); }); }
+    
+    function getQuickChatTemplates() { const saved = localStorage.getItem('madamTi_quickchat'); return saved ? JSON.parse(saved) : [...DEFAULT_QUICK_CHAT]; }
+    function saveQuickChatTemplates(templates) { localStorage.setItem('madamTi_quickchat', JSON.stringify(templates)); }
+    function openQuickChat() { if (!activePeerName || !activeSessions[activePeerId]?.conn) { alert('Pilih pasien terlebih dahulu'); return; } renderQuickChatList(); document.getElementById('quick-chat-overlay').classList.add('show'); }
+    function closeQuickChat() { document.getElementById('quick-chat-overlay').classList.remove('show'); }
+    
+    function renderQuickChatList() { 
+        const list = document.getElementById('quick-chat-list'); 
+        const templates = getQuickChatTemplates(); 
+        list.innerHTML = ''; 
+        templates.forEach((text, index) => { 
+            const item = document.createElement('div'); 
+            item.className = 'quick-chat-item'; 
+            item.innerHTML = `
+                <textarea class="quick-chat-text" id="qc-text-${index}" placeholder="Tulis pesan cepat di sini...">${text}</textarea>
+                <div class="quick-chat-actions">
+                    <button class="qc-btn qc-delete" onclick="deleteQuickChatItem(${index})">🗑️ Hapus</button>
+                    <button class="qc-btn qc-save" onclick="saveQuickChatItem(${index})">💾 Simpan</button>
+                    <button class="qc-btn qc-send" onclick="sendQuickChat(${index})">🚀 Kirim</button>
+                </div>
+            `; 
+            list.appendChild(item); 
+        }); 
+    }
+
+    function sendQuickChat(index) { 
+        const textarea = document.getElementById('qc-text-' + index); 
+        const msg = textarea.value.trim(); 
+        if (!msg) { alert('Pesan kosong'); return; } 
+        const session = activeSessions[activePeerId]; 
+        if (session && session.conn && session.conn.open) { 
+            session.conn.send({ type: 'text', text: msg }); 
+            saveChatToDB(adminId, session.name, { type: 'text', text: msg, direction: 'out', timestamp: new Date().toISOString() }); 
+            addMessageToWindow(msg, 'out'); 
+            session.conn.lastMessage = msg; 
+            updatePatientList(); 
+            closeQuickChat(); 
+        } else {
+            alert('Koneksi ke pasien terputus.');
+        }
+    }
+
+    function saveQuickChatItem(index) { const textarea = document.getElementById('qc-text-' + index); const templates = getQuickChatTemplates(); templates[index] = textarea.value.trim(); saveQuickChatTemplates(templates); alert('✅ Template disimpan'); }
+    function deleteQuickChatItem(index) { if (!confirm('Yakin ingin menghapus template ini?')) return; const templates = getQuickChatTemplates(); templates.splice(index, 1); saveQuickChatTemplates(templates); renderQuickChatList(); }
+    function addQuickChatTemplate() { const templates = getQuickChatTemplates(); templates.push('Template baru...'); saveQuickChatTemplates(templates); renderQuickChatList(); }
+    document.getElementById('quick-chat-overlay').addEventListener('click', function(e) { if (e.target === this) closeQuickChat(); });
+    setInterval(() => { if (peer && peer.disconnected) peer.reconnect(); }, 10000);
+</script>
+</body>
+</html>
